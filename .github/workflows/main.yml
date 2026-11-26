@@ -1,0 +1,55 @@
+
+name: Build Ecom Master ERP APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract project ZIP
+        run: unzip -q ecom_master_erp_github_build.zip
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        working-directory: ecom_master_erp_android
+        run: npm install
+
+      - name: Generate Android project
+        working-directory: ecom_master_erp_android
+        run: npx cap add android
+
+      - name: Sync Android
+        working-directory: ecom_master_erp_android
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: ecom_master_erp_android/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ecom-Master-ERP-APK
+          path: ecom_master_erp_android/android/app/build/outputs/apk/debug/app-debug.apk
+          
