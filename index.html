@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ecom Master ERP</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#172033;background:#eef2ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#eef2ff 0%,#f8fafc 48%,#ecfeff 100%);min-height:100vh}.wrap{max-width:1080px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+h1{font-size:24px;margin:0;background:linear-gradient(90deg,#4338ca,#0891b2);-webkit-background-clip:text;background-clip:text;color:transparent}small,.muted{color:#687386}.panel{background:rgba(255,255,255,.94);border:1px solid #dbe4f5;border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 8px 24px #263b6b12;backdrop-filter:blur(8px)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+input,select,button{font:inherit;padding:12px;border-radius:9px;border:1px solid #d6dce6;width:100%;margin:6px 0}
+button{background:linear-gradient(110deg,#4f46e5,#0891b2);color:white;border:0;font-weight:700;cursor:pointer;box-shadow:0 5px 14px #4f46e533}button.secondary{background:linear-gradient(110deg,#e0e7ff,#cffafe);color:#3730a3;box-shadow:none}button.danger{background:#9c2733}
+label{font-size:13px;font-weight:650;display:block;margin-top:8px}.hidden{display:none!important}
+.status{padding:10px;border-radius:8px;background:#eef3ff;margin:10px 0;white-space:pre-wrap}
+table{border-collapse:collapse;width:100%;font-size:14px;background:#fff;border-radius:12px;overflow:hidden}th{background:#eef2ff;color:#3730a3}tr:nth-child(even){background:#f8fafc}td,th{text-align:left;padding:10px;border-bottom:1px solid #edf0f5}.supplier-search{position:relative}.supplier-results{position:absolute;z-index:20;left:0;right:0;top:100%;max-height:220px;overflow:auto;background:#fff;border:1px solid #d6dce6;border-radius:9px;box-shadow:0 8px 20px #17203320}.supplier-results button{display:block;text-align:left;background:#fff;color:#172033;border-radius:0;margin:0;border-bottom:1px solid #edf0f5;font-weight:500}.supplier-results button:active,.supplier-results button:hover{background:#eef3ff}.supplier-hint{font-size:12px;color:#687386;margin:3px 0 0}
+#dashboardPanel{background:linear-gradient(145deg,#ffffff,#f3f7ff);border:1px solid #c7d2fe}
+#dashboardPanel>h2{color:#3730a3;font-size:25px}
+#dashboardCards .panel{margin:0;min-height:112px;border:0;color:white;position:relative;overflow:hidden;box-shadow:0 9px 20px #243b6b20}
+#dashboardCards .panel small{color:rgba(255,255,255,.88);font-weight:700;letter-spacing:.2px}
+#dashboardCards .panel h2{font-size:30px;color:white}
+#dashboardCards .panel:after{content:"";position:absolute;width:92px;height:92px;border-radius:50%;right:-22px;top:-24px;background:#ffffff20}
+#dashboardCards .panel:nth-child(8n+1){background:linear-gradient(135deg,#4f46e5,#818cf8)}
+#dashboardCards .panel:nth-child(8n+2){background:linear-gradient(135deg,#0284c7,#38bdf8)}
+#dashboardCards .panel:nth-child(8n+3){background:linear-gradient(135deg,#0f766e,#2dd4bf)}
+#dashboardCards .panel:nth-child(8n+4){background:linear-gradient(135deg,#7c3aed,#c084fc)}
+#dashboardCards .panel:nth-child(8n+5){background:linear-gradient(135deg,#c2410c,#fb923c)}
+#dashboardCards .panel:nth-child(8n+6){background:linear-gradient(135deg,#be123c,#fb7185)}
+#dashboardCards .panel:nth-child(8n+7){background:linear-gradient(135deg,#475569,#94a3b8)}
+#dashboardCards .panel:nth-child(8n+8){background:linear-gradient(135deg,#047857,#34d399)}
+#dashboardPanel>.panel{border-left:5px solid #6366f1}
+@media(max-width:600px){.wrap{padding:14px}header{align-items:flex-start;flex-direction:column}h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><h1>Ecom Master ERP</h1><small>Cloud-connected starter · Mobile & laptop</small></div><button id="logout" class="secondary hidden" style="width:auto">Sign out</button></header>
+<div id="config" class="panel">
+<h2>Connect your Supabase project</h2>
+<p class="muted">Enter your Project URL and Publishable Key. Do not enter a Secret or service_role key.</p>
+<label>Project URL</label><input id="url" placeholder="https://your-project-id.supabase.co" autocomplete="url">
+<label>Publishable Key</label><input id="key" placeholder="sb_publishable_..." autocomplete="off">
+<button id="saveConfig">Connect</button>
+</div>
+<div id="auth" class="panel hidden">
+<h2>ERP Login</h2>
+<p class="muted">Workspace owner: email/password se sign in karein. Team members: username/password use karein.</p>
+<div class="panel" style="background:#f8fafc;box-shadow:none">
+<h3>Admin / Workspace Owner</h3>
+<label>Email</label><input id="email" type="email" autocomplete="email">
+<label>Password</label><input id="password" type="password" autocomplete="current-password">
+<div class="grid"><button id="signup">Create owner account</button><button id="signin" class="secondary">Admin sign in</button></div>
+</div>
+<div class="panel" style="background:#f5f3ff;box-shadow:none">
+<h3>Team Member Login</h3>
+<label>Username</label><input id="loginUsername" autocomplete="username" placeholder="Your username">
+<label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Your password">
+<button id="usernameSignin">Login with username</button>
+</div>
+<button id="changeConfig" class="secondary">Change Supabase Settings</button>
+<div id="authMsg" class="status hidden"></div>
+</div>
+<div id="app" class="hidden">
+<div class="panel"><h2 id="welcome">Dashboard</h2><p class="muted">Your cloud workspace and starter product register.</p>
+<div id="workspaceArea"></div>
+</div>
+<div id="teamPanel" class="panel hidden" style="border-top:5px solid #7c3aed;background:linear-gradient(145deg,#fff,#f5f3ff)">
+<h2 style="color:#6d28d9">Team Members & Roles</h2>
+<p class="muted">Edge Function ke baghair: pehle Supabase Authentication mein user banayein, phir uska User UID yahan link karein. Login username/password se hoga.</p>
+<div class="grid">
+<div><label>Employee name *</label><input id="teamName" placeholder="Team member ka naam"></div>
+<div><label>Username * (3–32 characters)</label><input id="teamUsername" placeholder="e.g. ali.store"></div>
+<div><label>Auth User UID *</label><input id="teamUserId" placeholder="Supabase Authentication se User UID"></div>
+<div><label>Role / Access *</label><select id="teamRole"><option value="SOURCING">Sourcing</option><option value="WAREHOUSE">Warehouse</option><option value="ORDERS">Orders / Sales</option><option value="FINANCE">Finance</option><option value="VIEWER">Viewer (read only)</option><option value="ADMIN">Admin</option></select></div>
+</div>
+<button id="saveTeamRole">Create team member</button>
+<div id="teamMsg" class="status hidden"></div>
+<h3>Current workspace members</h3><button id="refreshTeam" class="secondary">Refresh members</button>
+<div id="teamList">Loading members...</div>
+<p class="muted"><strong>Important:</strong> Password team member ko securely alag se dein. Admin access sirf trusted person ko dein.</p>
+</div>
+<div id="dashboardPanel" class="panel hidden">
+<h2>Business Dashboard & Analytics</h2>
+<p class="muted">Workspace performance from saved records. Amounts are grouped by currency; no exchange-rate conversion is applied.</p>
+<button id="refreshDashboard" class="secondary">Refresh dashboard</button>
+<div id="dashboardMsg" class="status hidden"></div>
+<div class="grid" id="dashboardCards"></div>
+<div class="panel"><h3>Sales by currency</h3><div id="dashSales"></div></div>
+<div class="panel"><h3>Expenses by currency</h3><div id="dashExpenses"></div></div>
+<div class="panel"><h3>Inventory by warehouse</h3><div id="dashInventory"></div></div>
+<div class="panel"><h3>Orders & purchasing</h3><div id="dashOperations"></div></div>
+</div>
+<div id="productPanel" class="panel hidden">
+<h2>Add product</h2>
+<div class="grid">
+<div><label>SKU</label><input id="sku" placeholder="SKU-001"></div>
+<div><label>Product name</label><input id="productName" placeholder="Product name"></div>
+<div><label>Business model</label><select id="model"><option value="DROPSHIPPING">Dropshipping</option><option value="WHOLESALE">Wholesale</option><option value="PRIVATE_LABEL">Private label</option><option value="OWN_STOCK">Own stock</option></select></div>
+<div><label>Target sell price</label><input id="price" type="number" min="0" step="0.01" placeholder="0.00"></div>
+</div><button id="addProduct">Save product</button><div id="productMsg" class="status hidden"></div>
+</div>
+<div id="supplierPanel" class="panel hidden">
+<h2>Add supplier</h2><p class="muted">Save supplier contact details in your cloud workspace.</p>
+<div class="grid">
+<div><label>Supplier name *</label><input id="supplierName" placeholder="Supplier / company name"></div>
+<div><label>Country</label><input id="supplierCountry" placeholder="China, Pakistan, United Kingdom..."></div>
+<div><label>Contact person</label><input id="supplierContact" placeholder="Contact name"></div>
+<div><label>Email</label><input id="supplierEmail" type="email" placeholder="supplier@example.com"></div>
+<div><label>Phone / WhatsApp</label><input id="supplierPhone" placeholder="+..."></div>
+<div><label>Website</label><input id="supplierWebsite" placeholder="https://..."></div>
+<div><label>Payment terms</label><input id="supplierTerms" placeholder="Advance, Net 30, etc."></div>
+<div><label>Lead time (days)</label><input id="supplierLead" type="number" min="0" step="1" placeholder="e.g. 15"></div>
+</div><label>Notes</label><input id="supplierNotes" placeholder="MOQ, product range, remarks...">
+<button id="addSupplier">Save supplier</button><div id="supplierMsg" class="status hidden"></div>
+</div>
+<div id="costPanel" class="panel hidden">
+<h2>Product supplier costing</h2><p class="muted">Link a product with its supplier and record per-unit costs.</p>
+<div class="grid">
+<div><label>Product *</label><select id="costProduct"><option value="">Select product</option></select></div>
+<div class="supplier-search"><label>Supplier *</label><input id="costSupplierSearch" type="search" placeholder="Type supplier name to search..." autocomplete="off"><input id="costSupplier" type="hidden"><div id="supplierSearchResults" class="supplier-results hidden"></div><div class="supplier-hint" id="supplierSelectedHint">Tap and type to find a supplier.</div></div>
+<div><label>Currency</label><select id="costCurrency"><option>USD</option><option>GBP</option><option>EUR</option><option>PKR</option><option>AED</option><option>CNY</option></select></div>
+<div><label>Purchase cost per unit *</label><input id="purchaseCost" type="number" min="0" step="0.01" placeholder="0.00"></div>
+<div><label>Shipping cost per unit</label><input id="shippingCost" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Other cost per unit</label><input id="otherCost" type="number" min="0" step="0.01" value="0"></div>
+</div>
+<p><strong>Total landed cost per unit: <span id="landedTotal">0.00</span></strong></p>
+<button id="saveCost">Save product cost</button><div id="costMsg" class="status hidden"></div>
+</div>
+<div id="warehousePanel" class="panel hidden">
+<h2>Add warehouse</h2><p class="muted">Register your own, 3PL, supplier or marketplace fulfilment locations.</p>
+<div class="grid">
+<div><label>Warehouse name *</label><input id="warehouseName" placeholder="Main warehouse"></div>
+<div><label>Warehouse type *</label><select id="warehouseType"><option value="OWN">Own warehouse</option><option value="THIRD_PARTY_3PL">Third-party 3PL</option><option value="SUPPLIER">Supplier warehouse</option><option value="MARKETPLACE_FULFILMENT">Marketplace fulfilment</option></select></div>
+<div><label>Country *</label><input id="warehouseCountry" placeholder="Pakistan, United States..."></div>
+<div><label>City</label><input id="warehouseCity" placeholder="City"></div>
+<div><label>Address</label><input id="warehouseAddress" placeholder="Full address"></div>
+<div><label>Contact details</label><input id="warehouseContact" placeholder="Contact name, phone or email"></div>
+</div><button id="addWarehouse">Save warehouse</button><div id="warehouseMsg" class="status hidden"></div>
+</div>
+<div id="poPanel" class="panel hidden">
+<h2>Purchase Orders</h2><p class="muted">Ek order mein multiple products add karein. Total automatically calculate hoga.</p>
+<div class="grid">
+<div><label>PO Number *</label><input id="poNumber" placeholder="PO-2026-001"></div>
+<div><label>Supplier *</label><select id="poSupplier"><option value="">Select supplier</option></select></div>
+<div><label>Order date</label><input id="poDate" type="date"></div>
+<div><label>Currency</label><select id="poCurrency"><option>USD</option><option>GBP</option><option>EUR</option><option>PKR</option><option>AED</option><option>CNY</option></select></div>
+<div><label>Status</label><select id="poStatus"><option value="DRAFT">Draft</option><option value="SENT">Sent to supplier</option></select></div>
+</div>
+<div id="poItems"></div><button type="button" class="secondary" id="addPoItem">+ Add another product</button>
+<p><strong>Order total: <span id="poTotal">0.00</span></strong></p>
+<label>Notes</label><input id="poNotes" placeholder="Payment, delivery instructions...">
+<button id="savePO">Save Purchase Order</button><div id="poMsg" class="status hidden"></div>
+</div>
+<div id="inboundPanel" class="panel hidden">
+<h2>Inbound Shipments & Receiving</h2>
+<p class="muted">Supplier shipment record karein. Receive quantity confirm hone par hi warehouse stock increase hoga.</p>
+<div class="grid">
+<div><label>Shipment reference *</label><input id="inbReference" placeholder="SHIP-2026-001"></div>
+<div><label>Purchase Order *</label><select id="inbPO"><option value="">Select purchase order</option></select></div>
+<div><label>Destination warehouse *</label><select id="inbWarehouse"><option value="">Select warehouse</option></select></div>
+<div><label>Carrier / shipping method</label><input id="inbCarrier" placeholder="DHL, FedEx, Sea freight..."></div>
+<div><label>Tracking number</label><input id="inbTracking" placeholder="Tracking number"></div>
+<div><label>Origin country</label><input id="inbOrigin" placeholder="China, Pakistan..."></div>
+<div><label>Shipped date</label><input id="inbShipped" type="date"></div>
+<div><label>Expected arrival</label><input id="inbETA" type="date"></div>
+</div>
+<h3>Receive products</h3><p class="muted">Har product ki received quantity enter karein. Zero quantity par stock add nahi hoga.</p>
+<div id="inbItems">Purchase Order select karein.</div>
+<div class="grid">
+<div><label>Freight cost</label><input id="inbFreight" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Freight currency</label><select id="inbFreightCurrency"><option>USD</option><option>GBP</option><option>EUR</option><option>PKR</option><option>AED</option><option>CNY</option></select></div>
+<div><label>Customs duty</label><input id="inbDuty" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Other shipment cost</label><input id="inbOther" type="number" min="0" step="0.01" value="0"></div>
+</div>
+<button id="saveInbound">Save shipment & receive stock</button><div id="inbMsg" class="status hidden"></div>
+</div>
+<div class="panel"><h2>Inbound Shipment Register</h2><div id="inboundList">No shipments loaded.</div></div>
+<div class="panel hidden" id="salesPanel">
+<h2>Sales Orders & Order Management</h2>
+<p class="muted">Manual orders abhi record karein. eBay account mapping ke sath order aur product details save honge. Live eBay sync is version mein shamil nahi.</p>
+<div class="panel" style="box-shadow:none">
+<h3>eBay Account Setup</h3>
+<div class="grid"><div><label>Account name *</label><input id="ebayAccountName" placeholder="My eBay Store"></div><div><label>Marketplace *</label><select id="ebayMarketplace"><option value="EBAY_US">eBay US</option><option value="EBAY_UK">eBay UK</option><option value="EBAY_AU">eBay Australia</option><option value="EBAY_DE">eBay Germany</option><option value="EBAY_CA">eBay Canada</option><option value="OTHER">Other</option></select></div><div><label>Seller username</label><input id="ebaySeller" placeholder="eBay seller username"></div></div>
+<button id="saveEbayAccount" class="secondary">Save eBay Account</button><div id="ebayAccountMsg" class="status hidden"></div>
+</div>
+<h3>Add Sales Order</h3>
+<div class="grid">
+<div><label>Order number *</label><input id="salesOrderNumber" placeholder="eBay order ID / manual reference"></div>
+<div><label>eBay account *</label><select id="salesAccount"><option value="">Select account</option></select></div>
+<div><label>Order date *</label><input id="salesOrderDate" type="datetime-local"></div>
+<div><label>Buyer country</label><input id="salesBuyerCountry" placeholder="United States"></div>
+<div><label>Currency</label><select id="salesCurrency"><option>USD</option><option>GBP</option><option>EUR</option><option>PKR</option><option>AUD</option><option>CAD</option></select></div>
+<div><label>Order status</label><select id="salesStatus"><option value="NEW">New</option><option value="PAID">Paid</option><option value="PROCESSING">Processing</option><option value="SHIPPED">Shipped</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Cancelled</option></select></div>
+<div><label>Buyer reference / name</label><input id="salesBuyerRef" placeholder="Buyer name or reference"></div>
+<div><label>Product *</label><select id="salesProduct"><option value="">Select product</option></select></div>
+<div><label>Quantity *</label><input id="salesQty" type="number" min="1" step="1" value="1"></div>
+<div><label>Sale amount (line total) *</label><input id="salesAmount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+<div><label>Product cost (total)</label><input id="salesProductCost" type="number" min="0" step="0.01" value="0"></div>
+<div><label>eBay payment fees</label><input id="salesFees" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Outbound shipping cost</label><input id="salesShipping" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Dispatch warehouse</label><select id="salesWarehouse"><option value="">Select warehouse (optional)</option></select></div>
+</div>
+<button id="saveSalesOrder">Save Sales Order</button><div id="salesMsg" class="status hidden"></div>
+</div>
+<div class="panel"><h2>Sales Order Register</h2><div id="salesOrderList">No sales orders loaded.</div></div>
+<div class="panel"><h2>eBay Accounts</h2><div id="ebayAccountList">No accounts loaded.</div></div>
+<div class="panel hidden" id="fulfilmentPanel">
+<h2>Order Fulfilment & Shipping</h2>
+<p class="muted">Sales order ki picking, packing, dispatch aur delivery details record karein. Tracking number aur carrier bhi save hoga.</p>
+<div class="grid">
+<div><label>Sales order *</label><select id="fulOrder"><option value="">Select sales order</option></select></div>
+<div><label>Fulfilment method *</label><select id="fulMethod"><option value="OWN_STOCK">Own stock</option><option value="DROPSHIPPING">Dropshipping</option><option value="3PL">Third-party 3PL</option><option value="MARKETPLACE_FULFILMENT">Marketplace fulfilment</option></select></div>
+<div><label>Dispatch warehouse</label><select id="fulWarehouse"><option value="">Select warehouse (optional)</option></select></div>
+<div><label>Carrier / shipping service</label><input id="fulCarrier" placeholder="DHL, FedEx, USPS, Royal Mail..."></div>
+<div><label>Tracking number</label><input id="fulTracking" placeholder="Tracking number"></div>
+<div><label>Dispatch date</label><input id="fulDispatch" type="date"></div>
+<div><label>Expected / actual delivery date</label><input id="fulDelivery" type="date"></div>
+<div><label>Fulfilment status</label><select id="fulStatus"><option value="PENDING">Pending</option><option value="PICKING">Picking</option><option value="PACKED">Packed</option><option value="SHIPPED">Shipped</option><option value="DELIVERED">Delivered</option><option value="CANCELLED">Cancelled</option></select></div>
+</div>
+<button id="saveFulfilment">Save Fulfilment</button><div id="fulMsg" class="status hidden"></div>
+</div>
+<div class="panel"><h2>Fulfilment & Shipping Register</h2><div id="fulfilmentList">No fulfilments loaded.</div></div>
+<div class="panel hidden" id="expensesPanel">
+<h2>Expenses & Profit/Loss Management</h2>
+<p class="muted">Business expenses record karein. Monthly expense total aur sales se preliminary margin estimate dekhein; taxes, refunds aur unrecorded costs shamil nahi honge.</p>
+<div class="grid">
+<div><label>Expense date *</label><input id="expenseDate" type="date"></div>
+<div><label>Category *</label><select id="expenseCategory"><option>Product Purchase</option><option>Shipping / Freight</option><option>Customs Duty</option><option>Warehouse Rent</option><option>Office Rent</option><option>Advertising</option><option>Staff / Payroll</option><option>Packaging</option><option>Software / Subscription</option><option>Other</option></select></div>
+<div><label>Description *</label><input id="expenseDescription" placeholder="Expense details"></div>
+<div><label>Amount *</label><input id="expenseAmount" type="number" min="0.01" step="0.01" placeholder="0.00"></div>
+<div><label>Currency</label><select id="expenseCurrency"><option>USD</option><option>GBP</option><option>EUR</option><option>PKR</option><option>AUD</option><option>CAD</option></select></div>
+<div><label>Reference type</label><input id="expenseReferenceType" placeholder="PO, shipment, campaign..."></div>
+</div>
+<button id="saveExpense">Save Expense</button><div id="expenseMsg" class="status hidden"></div>
+</div>
+<div class="panel"><h2>Expenses Register & Monthly Summary</h2><div id="expenseSummary">No expense data loaded.</div><div id="expenseList"></div></div>
+<div class="panel hidden" id="marketingPanel">
+<h2>Marketing & Advertising Management</h2>
+<p class="muted">Campaigns, ad spend aur attributed sales manually record karein. ROAS = attributed sales ÷ ad spend. Different currencies ko convert nahi kiya jata.</p>
+<div class="grid">
+<div><label>Campaign name *</label><input id="mktName" placeholder="Spring sale campaign"></div>
+<div><label>Channel *</label><select id="mktChannel"><option>Facebook Ads</option><option>Google Ads</option><option>eBay Promoted Listings</option><option>TikTok Ads</option><option>Instagram Ads</option><option>Other</option></select></div>
+<div><label>Start date</label><input id="mktStart" type="date"></div>
+<div><label>End date</label><input id="mktEnd" type="date"></div>
+<div><label>Currency</label><select id="mktCurrency"><option>USD</option><option>GBP</option><option>EUR</option><option>PKR</option><option>AUD</option><option>CAD</option></select></div>
+<div><label>Ad spend *</label><input id="mktSpend" type="number" min="0" step="0.01" placeholder="0.00"></div>
+<div><label>Attributed sales</label><input id="mktSales" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Notes</label><input id="mktNotes" placeholder="Campaign details"></div>
+</div>
+<button id="saveCampaign">Save Campaign</button><div id="mktMsg" class="status hidden"></div>
+<div class="panel"><h3>Campaign Register & Performance</h3><div id="mktList">No campaigns loaded.</div></div>
+</div>
+<div class="panel hidden" id="returnsPanel">
+<h2>Returns & Refund Management</h2>
+<p class="muted">Customer return record karein. Resellable item ko warehouse mein receive karne ka option bhi hai.</p>
+<div class="grid">
+<div><label>Sales order item *</label><select id="returnOrderItem"><option value="">Select order and product</option></select></div>
+<div><label>Return date</label><input id="returnDate" type="date"></div>
+<div><label>Return quantity *</label><input id="returnQty" type="number" min="1" step="1" value="1"></div>
+<div><label>Reason</label><input id="returnReason" placeholder="Damaged, not as described, changed mind..."></div>
+<div><label>Refund amount</label><input id="returnRefund" type="number" min="0" step="0.01" value="0"></div>
+<div><label>Item condition</label><select id="returnCondition"><option value="SELLABLE">Sellable</option><option value="DAMAGED">Damaged</option><option value="OPENED">Opened</option><option value="DEFECTIVE">Defective</option><option value="UNKNOWN">Unknown</option></select></div>
+<div><label>Restock warehouse (optional)</label><select id="returnWarehouse"><option value="">Do not add to stock</option></select></div>
+<div><label>Return status</label><select id="returnStatus"><option value="REQUESTED">Requested</option><option value="APPROVED">Approved</option><option value="RECEIVED">Received</option><option value="REFUNDED">Refunded</option><option value="REJECTED">Rejected</option></select></div>
+</div>
+<button id="saveReturn">Save Return</button><div id="returnMsg" class="status hidden"></div>
+</div>
+<div class="panel"><h2>Returns & Refund Register</h2><div id="returnList">No returns loaded.</div></div>
+<div class="panel hidden" id="transferPanel">
+<h2>Stock Transfer</h2><p class="muted">Ek warehouse se doosre warehouse mein available stock transfer karein.</p>
+<div class="grid"><div><label>Transfer reference *</label><input id="transferReference" placeholder="TR-2026-001"></div><div><label>Source warehouse *</label><select id="transferFrom"><option value="">Select source warehouse</option></select></div><div><label>Destination warehouse *</label><select id="transferTo"><option value="">Select destination warehouse</option></select></div></div>
+<h3>Products & quantities</h3><div id="transferProducts">Products loading...</div><label>Notes</label><input id="transferNotes" placeholder="Reason / remarks"><button id="saveTransfer">Save Stock Transfer</button><div id="transferMsg" class="status hidden"></div>
+</div>
+<div class="panel"><h2>Stock Transfer Register</h2><div id="transferList">No transfers loaded.</div></div>
+<div class="panel"><h2>Inventory / Stock Register</h2><p class="muted">Product aur warehouse ke hisaab se stock balance. Inbound receiving aur transfers se stock update hota hai.</p><button id="refreshInventory" class="secondary">Refresh stock</button><div id="inventoryList">Stock load nahi hua.</div></div>
+<div class="panel"><h2>Purchase Order Register</h2><div id="purchaseOrders">Create your workspace to load purchase orders.</div></div>
+<div class="panel"><h2>Warehouses</h2><div id="warehouses">Create your workspace to load warehouses.</div></div>
+<div class="panel"><h2>Supplier costs</h2><div id="costs">Create your workspace to load supplier costs.</div></div>
+<div class="panel"><h2>Suppliers</h2><div id="suppliers">Create your workspace to load suppliers.</div></div>
+<div class="panel"><h2>Products</h2><div id="products">Create your workspace to load products.</div></div>
+</div>
+<div id="globalMsg" class="status">First connect your Supabase project.</div>
+</div>
+<script>
+let sb=null, currentUser=null, workspaceId=null, supplierOptions=[], selectedSupplierId="";
+const $=id=>document.getElementById(id);
+function msg(id,text){$(id).textContent=text;$(id).classList.remove('hidden')}
+function show(id,on=true){$(id).classList.toggle('hidden',!on)}
+function configSaved(){return localStorage.getItem('erp_url')&&localStorage.getItem('erp_key')}
+function initClient(){
+ const url=localStorage.getItem('erp_url'),key=localStorage.getItem('erp_key');
+ if(!url||!key){show('config');show('auth',false);return}
+ sb=window.supabase.createClient(url,key);
+ show('config',false);show('auth',true);show('globalMsg',false);
+ sb.auth.getSession().then(({data})=>{if(data.session) onSignedIn(data.session.user)});
+}
+$('changeConfig').onclick=()=>{
+ $('url').value=localStorage.getItem('erp_url')||'';
+ $('key').value=localStorage.getItem('erp_key')||'';
+ show('config',true); show('auth',false); show('globalMsg',true);
+ $('globalMsg').textContent='Update your Project URL and Publishable Key, then tap Connect.';
+};
+$('saveConfig').onclick=()=>{
+ const url=$('url').value.trim(),key=$('key').value.trim();
+ if(!url.startsWith('https://')||!key){msg('globalMsg','Please enter a valid HTTPS Project URL and Publishable Key.');return}
+ localStorage.setItem('erp_url',url);localStorage.setItem('erp_key',key);initClient();
+};
+$('signup').onclick=async()=>{
+ if(!sb)return; const email=$('email').value.trim(),password=$('password').value;
+ if(!email||password.length<8){msg('authMsg','Enter your email and a password with at least 8 characters.');return}
+ const {data,error}=await sb.auth.signUp({email,password});
+ if(error){msg('authMsg',error.message);return}
+ if(data.session) onSignedIn(data.user); else msg('authMsg','Account created. Check your email and click the confirmation link, then return here and Sign in.');
+};
+$('signin').onclick=async()=>{
+ const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+ if(error){msg('authMsg',error.message);return} onSignedIn(data.user);
+};
+$('usernameSignin').onclick=async()=>{
+ if(!sb)return;
+ const username=$('loginUsername').value.trim().toLowerCase(),password=$('loginPassword').value;
+ if(!username||!password){msg('authMsg','Username aur password enter karein.');return}
+ const email=username+'@login.ecommastererp.invalid';
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error){msg('authMsg','Incorrect username or password. '+error.message);return}
+ onSignedIn(data.user);
+};
+async function onSignedIn(user){
+ currentUser=user;show('auth',false);show('app',true);show('logout',true);
+ $('welcome').textContent='Welcome, '+(user.user_metadata?.full_name||user.user_metadata?.username||user.email||'Team member');
+ await loadWorkspace();
+}
+async function loadWorkspace(){
+ const {data:members,error}=await sb.from('workspace_members').select('workspace_id,role').eq('user_id',currentUser.id).limit(1);
+ if(error){$('workspaceArea').textContent='Could not check workspace: '+error.message;return}
+ if(!members.length){
+  $('workspaceArea').innerHTML='<p>No ERP workspace exists for this account yet.</p><label>Workspace name</label><input id="workspaceName" value="Ecom Master ERP"><button id="createWorkspace">Create my workspace</button><div id="workspaceMsg" class="status hidden"></div>';
+  $('createWorkspace').onclick=async()=>{
+   const name=$('workspaceName').value.trim();if(!name)return;
+   const {data,error}=await sb.rpc('create_erp_workspace',{workspace_name:name});
+   if(error){msg('workspaceMsg',error.message);return}
+   workspaceId=data;msg('workspaceMsg','Workspace created successfully.');await loadWorkspace();
+  };
+  show('productPanel',false);return;
+ }
+ workspaceId=members[0].workspace_id;
+ $('workspaceArea').textContent='Workspace connected · Your role: '+members[0].role;
+ show('teamPanel',members[0].role==='ADMIN'); if(members[0].role==='ADMIN') await loadTeamMembers();
+ show('dashboardPanel',true); await loadDashboard();
+ show('productPanel',members[0].role==='ADMIN'||members[0].role==='SOURCING');
+ show('supplierPanel',members[0].role==='ADMIN'||members[0].role==='SOURCING');
+ show('warehousePanel',members[0].role==='ADMIN'||members[0].role==='WAREHOUSE');
+ await loadProducts(); await loadSuppliers(); await loadWarehouses(); show('salesPanel',members[0].role==='ADMIN'||members[0].role==='ORDERS'); await loadSalesOptions(); await loadSalesOrders(); await loadEbayAccounts(); show('fulfilmentPanel',members[0].role==='ADMIN'||members[0].role==='ORDERS'||members[0].role==='WAREHOUSE'); await loadFulfilmentOptions(); await loadFulfilments(); show('returnsPanel',members[0].role==='ADMIN'||members[0].role==='ORDERS'||members[0].role==='WAREHOUSE'||members[0].role==='FINANCE'); await loadReturnOptions(); await loadReturns(); show('expensesPanel',members[0].role==='ADMIN'||members[0].role==='FINANCE'); await loadExpenses(); show('marketingPanel',members[0].role==='ADMIN'||members[0].role==='FINANCE'||members[0].role==='ORDERS'); await loadMarketingCampaigns(); show('transferPanel',members[0].role==='ADMIN'||members[0].role==='WAREHOUSE'); await loadTransferOptions(); await loadTransferList(); show('inboundPanel',members[0].role==='ADMIN'||members[0].role==='SOURCING'||members[0].role==='WAREHOUSE'); await loadInboundOptions(); await loadInboundList(); await loadInventory(); show('poPanel',members[0].role==='ADMIN'||members[0].role==='SOURCING'); await loadPOOptions(); await loadPurchaseOrders(); show('costPanel',members[0].role==='ADMIN'||members[0].role==='SOURCING'); await loadCostOptions(); await loadCosts();
+}
+async function loadTeamMembers(){
+ const target=$('teamList'); target.textContent='Loading members...';
+ const {data,error}=await sb.from('workspace_members').select('user_id,role').eq('workspace_id',workspaceId).order('role');
+ if(error){target.textContent='Could not load members: '+error.message;return}
+ if(!data||!data.length){target.textContent='No workspace members found.';return}
+ const names={ADMIN:'Admin',SOURCING:'Sourcing',WAREHOUSE:'Warehouse',ORDERS:'Orders / Sales',FINANCE:'Finance',VIEWER:'Viewer'};
+ target.innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>User UID</th><th>Role</th></tr></thead><tbody>'+data.map(m=>'<tr><td style="word-break:break-all">'+esc(m.user_id)+'</td><td>'+esc(names[m.role]||m.role)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+$('saveTeamRole').onclick=async()=>{
+ const name=$('teamName').value.trim(),username=$('teamUsername').value.trim().toLowerCase(),user_id=$('teamUserId').value.trim(),role=$('teamRole').value;
+ if(!name||!/^[a-z0-9._-]{3,32}$/.test(username)||!/^[0-9a-f-]{36}$/i.test(user_id)){msg('teamMsg','Name, valid username aur Supabase Auth User UID enter karein.');return}
+ const {data,error}=await sb.rpc('admin_link_team_member',{p_workspace_id:workspaceId,p_user_id:user_id,p_username:username,p_role:role,p_full_name:name});
+ if(error||!data?.success){msg('teamMsg',data?.error||error?.message||'Team member link nahi hua.');return}
+ msg('teamMsg','Team member linked: '+username+' · Role: '+role);
+ $('teamName').value='';$('teamUsername').value='';$('teamUserId').value='';await loadTeamMembers();
+};
+$('refreshTeam').onclick=loadTeamMembers;
+
+async function loadProducts(){
+ const {data,error}=await sb.from('products').select('sku,product_name,business_model,target_sell_price').eq('workspace_id',workspaceId).order('product_name');
+ if(error){$('products').textContent='Could not load products: '+error.message;return}
+ if(!data.length){$('products').textContent='No products yet. Add your first product above.';return}
+ $('products').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>SKU</th><th>Product</th><th>Model</th><th>Target price</th></tr></thead><tbody>'+data.map(p=>'<tr><td>'+esc(p.sku)+'</td><td>'+esc(p.product_name)+'</td><td>'+esc(p.business_model)+'</td><td>'+(p.target_sell_price??'—')+'</td></tr>').join('')+'</tbody></table></div>';
+}
+async function loadSuppliers(){
+ const {data,error}=await sb.from('suppliers').select('supplier_name,country,contact_name,email,phone,payment_terms,lead_time_days').eq('workspace_id',workspaceId).order('supplier_name');
+ if(error){$('suppliers').textContent='Could not load suppliers: '+error.message;return}
+ if(!data.length){$('suppliers').textContent='No suppliers yet. Add your first supplier above.';return}
+ $('suppliers').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Supplier</th><th>Country</th><th>Contact</th><th>Email</th><th>Phone</th><th>Lead time</th><th>Payment terms</th></tr></thead><tbody>'+data.map(s=>'<tr><td>'+esc(s.supplier_name)+'</td><td>'+esc(s.country)+'</td><td>'+esc(s.contact_name)+'</td><td>'+esc(s.email)+'</td><td>'+esc(s.phone)+'</td><td>'+(s.lead_time_days??'—')+'</td><td>'+esc(s.payment_terms)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+async function loadWarehouses(){
+ const {data,error}=await sb.from('warehouses').select('id,warehouse_name,warehouse_type,country,city,address,contact_details,is_active').eq('workspace_id',workspaceId).order('warehouse_name');
+ if(error){$('warehouses').textContent='Could not load warehouses: '+error.message;return}
+ if(!data.length){$('warehouses').textContent='No warehouses yet. Add your first warehouse above.';return}
+ const types={OWN:'Own warehouse',THIRD_PARTY_3PL:'Third-party 3PL',SUPPLIER:'Supplier warehouse',MARKETPLACE_FULFILMENT:'Marketplace fulfilment'};
+ $('warehouses').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Warehouse</th><th>Type</th><th>Country</th><th>City</th><th>Address</th><th>Contact</th><th>Status</th></tr></thead><tbody>'+data.map(w=>'<tr><td>'+esc(w.warehouse_name)+'</td><td>'+esc(types[w.warehouse_type]||w.warehouse_type)+'</td><td>'+esc(w.country)+'</td><td>'+esc(w.city)+'</td><td>'+esc(w.address)+'</td><td>'+esc(w.contact_details)+'</td><td>'+(w.is_active?'Active':'Inactive')+'</td></tr>').join('')+'</tbody></table></div>';
+}
+$('addWarehouse').onclick=async()=>{
+ const payload={workspace_id:workspaceId,warehouse_name:$('warehouseName').value.trim(),warehouse_type:$('warehouseType').value,country:$('warehouseCountry').value.trim(),city:$('warehouseCity').value.trim()||null,address:$('warehouseAddress').value.trim()||null,contact_details:$('warehouseContact').value.trim()||null};
+ if(!payload.warehouse_name||!payload.country){msg('warehouseMsg','Warehouse name and country are required.');return}
+ const {error}=await sb.from('warehouses').insert(payload);if(error){msg('warehouseMsg',error.message);return}
+ msg('warehouseMsg','Warehouse saved successfully.');['warehouseName','warehouseCountry','warehouseCity','warehouseAddress','warehouseContact'].forEach(id=>$(id).value='');await loadWarehouses();
+};
+
+let poProducts=[];
+async function loadPOOptions(){
+ const [pr,su]=await Promise.all([sb.from('products').select('id,sku,product_name').eq('workspace_id',workspaceId).order('product_name'),sb.from('suppliers').select('id,supplier_name').eq('workspace_id',workspaceId).order('supplier_name')]);
+ if(pr.error){msg('poMsg','Products: '+pr.error.message);return} if(su.error){msg('poMsg','Suppliers: '+su.error.message);return}
+ poProducts=pr.data||[];
+ $('poSupplier').innerHTML='<option value="">Select supplier</option>'+(su.data||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.supplier_name)+'</option>').join('');
+ if(!$('poItems').children.length)addPoItemRow();
+}
+function addPoItemRow(){
+ const row=document.createElement('div');row.className='grid po-item';row.style.cssText='border:1px solid #e3e8f0;border-radius:10px;padding:10px;margin:10px 0';
+ row.innerHTML='<div><label>Product *</label><select class="poi-product"><option value="">Select product</option>'+poProducts.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.sku)+' — '+esc(p.product_name)+'</option>').join('')+'</select></div><div><label>Quantity *</label><input class="poi-qty" type="number" min="1" step="1" value="1"></div><div><label>Unit cost *</label><input class="poi-cost" type="number" min="0" step="0.01" placeholder="0.00"></div><div><label>Line total</label><input class="poi-total" readonly value="0.00"><button type="button" class="danger poi-remove">Remove row</button></div>';
+ $('poItems').appendChild(row);
+ row.querySelectorAll('.poi-qty,.poi-cost').forEach(el=>el.addEventListener('input',updatePOTotal));row.querySelector('.poi-remove').onclick=()=>{if(document.querySelectorAll('.po-item').length>1){row.remove();updatePOTotal()}else msg('poMsg','At least one product row is required.')};
+}
+function updatePOTotal(){let total=0;document.querySelectorAll('.po-item').forEach(row=>{const q=Number(row.querySelector('.poi-qty').value||0),c=Number(row.querySelector('.poi-cost').value||0),v=q*c;row.querySelector('.poi-total').value=v.toFixed(2);total+=v});$('poTotal').textContent=total.toFixed(2)}
+$('addPoItem').onclick=addPoItemRow;
+$('savePO').onclick=async()=>{
+ const rows=[...document.querySelectorAll('.po-item')];const items=rows.map(row=>({product_id:row.querySelector('.poi-product').value,quantity_ordered:Number(row.querySelector('.poi-qty').value),unit_cost:Number(row.querySelector('.poi-cost').value)}));
+ if(!$('poNumber').value.trim()||!$('poSupplier').value){msg('poMsg','PO number aur supplier select karna zaroori hai.');return}
+ if(!items.length||items.some(x=>!x.product_id||!Number.isInteger(x.quantity_ordered)||x.quantity_ordered<1||!rowCostValid(x.unit_cost))){msg('poMsg','Har row mein product, quantity aur unit cost sahi enter karein.');return}
+ const header={workspace_id:workspaceId,po_number:$('poNumber').value.trim(),supplier_id:$('poSupplier').value,order_date:$('poDate').value||new Date().toISOString().slice(0,10),currency:$('poCurrency').value,status:$('poStatus').value,notes:$('poNotes').value.trim()||null};
+ const {data:po,error}=await sb.from('purchase_orders').insert(header).select('id').single();if(error){msg('poMsg',error.message);return}
+ const payload=items.map(x=>({...x,workspace_id:workspaceId,purchase_order_id:po.id}));const {error:itemError}=await sb.from('purchase_order_items').insert(payload);
+ if(itemError){msg('poMsg','PO header save ho gaya, lekin items save nahi huay: '+itemError.message+' — PO '+header.po_number+' ko delete na karein; support ke liye error bhejein.');return}
+ msg('poMsg','Purchase Order '+header.po_number+' successfully saved.');$('poNumber').value='';$('poNotes').value='';$('poItems').innerHTML='';addPoItemRow();updatePOTotal();await loadPurchaseOrders();
+};
+function rowCostValid(v){return Number.isFinite(v)&&v>=0}
+async function loadPurchaseOrders(){
+ const {data,error}=await sb.from('purchase_orders').select('id,po_number,order_date,currency,status,suppliers(supplier_name),purchase_order_items(quantity_ordered,unit_cost)').eq('workspace_id',workspaceId).order('order_date',{ascending:false});
+ if(error){$('purchaseOrders').textContent='Could not load purchase orders: '+error.message;return}
+ if(!data.length){$('purchaseOrders').textContent='No purchase orders saved yet.';return}
+ $('purchaseOrders').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>PO Number</th><th>Supplier</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>'+data.map(p=>{const total=(p.purchase_order_items||[]).reduce((a,x)=>a+Number(x.quantity_ordered)*Number(x.unit_cost),0);return '<tr><td>'+esc(p.po_number)+'</td><td>'+esc(p.suppliers?.supplier_name)+'</td><td>'+esc(p.order_date)+'</td><td>'+(p.purchase_order_items||[]).length+'</td><td>'+esc(p.currency)+' '+total.toFixed(2)+'</td><td>'+esc(p.status)+'</td></tr>'}).join('')+'</tbody></table></div>';
+}
+
+
+let inboundPOItems=[];
+async function loadInboundOptions(){
+ const [pos,wh]=await Promise.all([
+  sb.from('purchase_orders').select('id,po_number,suppliers(supplier_name)').eq('workspace_id',workspaceId).order('order_date',{ascending:false}),
+  sb.from('warehouses').select('id,warehouse_name').eq('workspace_id',workspaceId).eq('is_active',true).order('warehouse_name')
+ ]);
+ if(pos.error){msg('inbMsg','Purchase Orders: '+pos.error.message);return}
+ if(wh.error){msg('inbMsg','Warehouses: '+wh.error.message);return}
+ $('inbPO').innerHTML='<option value="">Select purchase order</option>'+(pos.data||[]).map(p=>'<option value="'+esc(p.id)+'">'+esc(p.po_number)+' — '+esc(p.suppliers?.supplier_name)+'</option>').join('');
+ $('inbWarehouse').innerHTML='<option value="">Select warehouse</option>'+(wh.data||[]).map(w=>'<option value="'+esc(w.id)+'">'+esc(w.warehouse_name)+'</option>').join('');
+}
+$('inbPO').addEventListener('change',loadInboundPOLines);
+async function loadInboundPOLines(){
+ const poId=$('inbPO').value;
+ if(!poId){$('inbItems').textContent='Purchase Order select karein.';inboundPOItems=[];return}
+ const {data,error}=await sb.from('purchase_order_items').select('id,product_id,quantity_ordered,quantity_received,products(sku,product_name)').eq('purchase_order_id',poId).eq('workspace_id',workspaceId);
+ if(error){msg('inbMsg',error.message);return}
+ inboundPOItems=data||[];
+ if(!inboundPOItems.length){$('inbItems').textContent='Is PO mein products nahi mile.';return}
+ $('inbItems').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Product</th><th>Ordered</th><th>Already received</th><th>Remaining</th><th>Received Quantity</th></tr></thead><tbody>'+inboundPOItems.map((x,i)=>{const remain=Math.max(0,Number(x.quantity_ordered)-Number(x.quantity_received||0));return '<tr><td>'+esc(x.products?.sku)+' — '+esc(x.products?.product_name)+'</td><td>'+x.quantity_ordered+'</td><td>'+Number(x.quantity_received||0)+'</td><td>'+remain+'</td><td><input class="inb-qty" data-index="'+i+'" type="number" inputmode="numeric" min="0" step="1" max="'+remain+'" data-remaining="'+remain+'" value="0" aria-label="Received quantity for '+esc(x.products?.product_name)+'" style="width:120px;min-height:44px;font-size:16px"></td></tr>'}).join('')+'</tbody></table></div>';
+}
+$('saveInbound').onclick=async()=>{
+ const ref=$('inbReference').value.trim(),poId=$('inbPO').value,warehouseId=$('inbWarehouse').value;
+ if(!ref||!poId||!warehouseId){msg('inbMsg','Shipment reference, Purchase Order aur destination warehouse required hain.');return}
+ if(!inboundPOItems.length){msg('inbMsg','Selected PO ke products load nahi huay.');return}
+ const qtyInputs=Array.from($('inbItems').querySelectorAll('input.inb-qty'));
+ const qtyByIndex=new Map(qtyInputs.map(el=>[Number(el.getAttribute('data-index')),String(el.value??'0').trim()]));
+ const received=inboundPOItems.map((item,i)=>{const raw=qtyByIndex.has(i)?qtyByIndex.get(i):'0';const qty=raw===''?0:Number(raw);return {item,qty};});
+ if(received.some(x=>!Number.isInteger(x.qty)||x.qty<0||x.qty>Math.max(0,Number(x.item.quantity_ordered)-Number(x.item.quantity_received||0)))){msg('inbMsg','Received quantity remaining quantity se zyada ya invalid hai.');return}
+ if(!received.some(x=>x.qty>0)){msg('inbMsg','Kam az kam ek product ki received quantity 1 ya zyada enter karein.');return}
+ const shipment={workspace_id:workspaceId,shipment_reference:ref,purchase_order_id:poId,destination_warehouse_id:warehouseId,carrier:$('inbCarrier').value.trim()||null,tracking_number:$('inbTracking').value.trim()||null,origin_country:$('inbOrigin').value.trim()||null,shipped_date:$('inbShipped').value||null,estimated_arrival:$('inbETA').value||null,freight_cost:Number($('inbFreight').value||0),freight_currency:$('inbFreightCurrency').value,customs_duty:Number($('inbDuty').value||0),other_cost:Number($('inbOther').value||0),delivered_date:new Date().toISOString().slice(0,10),status:'DELIVERED'};
+ const {data:sh,error}=await sb.from('inbound_shipments').insert(shipment).select('id').single();
+ if(error){msg('inbMsg',error.message);return}
+ for(const r of received.filter(x=>x.qty>0)){
+  const next=Number(r.item.quantity_received||0)+r.qty;
+  const {error:updateError}=await sb.from('purchase_order_items').update({quantity_received:next}).eq('id',r.item.id).eq('workspace_id',workspaceId);
+  if(updateError){msg('inbMsg','Shipment '+ref+' save ho gaya, lekin PO received quantity update nahi hui: '+updateError.message+'. Shipment ko dobara create na karein.');return}
+  const {error:stockError}=await sb.from('stock_movements').insert({workspace_id:workspaceId,product_id:r.item.product_id,warehouse_id:warehouseId,movement_type:'INBOUND',quantity:r.qty,reference_type:'INBOUND_SHIPMENT',reference_id:sh.id,notes:'Received from PO via shipment '+ref});
+  if(stockError){msg('inbMsg','PO quantity update ho gayi lekin stock movement save nahi hua: '+stockError.message+'. Shipment '+ref+' ko dobara create na karein.');return}
+ }
+ msg('inbMsg','Shipment '+ref+' saved. Received quantities aur warehouse stock movements record ho gaye.');
+ $('inbReference').value='';$('inbTracking').value='';$('inbCarrier').value='';$('inbFreight').value='0';$('inbDuty').value='0';$('inbOther').value='0';$('inbPO').value='';$('inbItems').textContent='Purchase Order select karein.';
+ await loadInboundList();await loadInventory();await loadPurchaseOrders();inboundPOItems=[];
+};
+async function loadSalesOptions(){
+ const [ac,pr,wh]=await Promise.all([
+  sb.from('ebay_accounts').select('id,account_name,marketplace,seller_username').eq('workspace_id',workspaceId).order('account_name'),
+  sb.from('products').select('id,sku,product_name').eq('workspace_id',workspaceId).order('product_name'),
+  sb.from('warehouses').select('id,warehouse_name').eq('workspace_id',workspaceId).order('warehouse_name')
+ ]);
+ if(ac.error){msg('salesMsg','eBay accounts: '+ac.error.message);return}
+ if(pr.error){msg('salesMsg','Products: '+pr.error.message);return}
+ if(wh.error){msg('salesMsg','Warehouses: '+wh.error.message);return}
+ $('salesAccount').innerHTML='<option value="">Select account</option>'+(ac.data||[]).map(a=>'<option value="'+a.id+'">'+esc(a.account_name)+' ('+esc(a.marketplace)+')</option>').join('');
+ $('salesProduct').innerHTML='<option value="">Select product</option>'+(pr.data||[]).map(x=>'<option value="'+x.id+'">'+esc(x.sku)+' — '+esc(x.product_name)+'</option>').join('');
+ $('salesWarehouse').innerHTML='<option value="">Select warehouse (optional)</option>'+(wh.data||[]).map(x=>'<option value="'+x.id+'">'+esc(x.warehouse_name)+'</option>').join('');
+}
+$('saveEbayAccount').onclick=async()=>{
+ const payload={workspace_id:workspaceId,account_name:$('ebayAccountName').value.trim(),marketplace:$('ebayMarketplace').value,seller_username:$('ebaySeller').value.trim()||null,is_active:true};
+ if(!payload.account_name){msg('ebayAccountMsg','Account name zaroori hai.');return}
+ const {error}=await sb.from('ebay_accounts').insert(payload);if(error){msg('ebayAccountMsg',error.message);return}
+ msg('ebayAccountMsg','eBay account save ho gaya.');$('ebayAccountName').value='';$('ebaySeller').value='';await loadSalesOptions();await loadEbayAccounts();
+};
+$('saveSalesOrder').onclick=async()=>{
+ const order={workspace_id:workspaceId,ebay_account_id:$('salesAccount').value,ebay_order_id:$('salesOrderNumber').value.trim(),order_date:$('salesOrderDate').value?new Date($('salesOrderDate').value).toISOString():new Date().toISOString(),buyer_country:$('salesBuyerCountry').value.trim()||null,currency:$('salesCurrency').value,order_status:$('salesStatus').value,buyer_reference:$('salesBuyerRef').value.trim()||null};
+ const product=$('salesProduct').value,qty=Number($('salesQty').value),amount=Number($('salesAmount').value);
+ if(!order.ebay_account_id||!order.ebay_order_id||!product||!Number.isInteger(qty)||qty<1||$('salesAmount').value.trim()===''||amount<0){msg('salesMsg','Order number, eBay account, product, valid quantity aur sale amount zaroori hain.');return}
+ $('saveSalesOrder').disabled=true;
+ const {data,error}=await sb.from('sales_orders').insert(order).select('id').single();
+ if(error){$('saveSalesOrder').disabled=false;msg('salesMsg',error.message);return}
+ const item={workspace_id:workspaceId,sales_order_id:data.id,product_id:product,quantity:qty,sale_amount:amount,product_cost:Number($('salesProductCost').value||0),ebay_payment_fees:Number($('salesFees').value||0),outbound_shipping_cost:Number($('salesShipping').value||0),warehouse_id:$('salesWarehouse').value||null};
+ const result=await sb.from('sales_order_items').insert(item);
+ $('saveSalesOrder').disabled=false;
+ if(result.error){msg('salesMsg','Order header save ho gaya, lekin item save nahi hua: '+result.error.message+'. Is order ko dobara create na karein; support ke liye error bhejein.');return}
+ msg('salesMsg','Sales order aur product line successfully save ho gayi.');
+ ['salesOrderNumber','salesBuyerCountry','salesBuyerRef','salesAmount'].forEach(id=>$(id).value='');$('salesQty').value='1';$('salesProductCost').value='0';$('salesFees').value='0';$('salesShipping').value='0';
+ await loadSalesOrders();
+};
+async function loadSalesOrders(){
+ const {data,error}=await sb.from('sales_orders').select('id,ebay_order_id,order_date,buyer_country,currency,order_status,buyer_reference,ebay_accounts(account_name,marketplace),sales_order_items(quantity,sale_amount,products(sku,product_name))').eq('workspace_id',workspaceId).order('order_date',{ascending:false});
+ if(error){$('salesOrderList').textContent='Could not load sales orders: '+error.message;return}
+ if(!data?.length){$('salesOrderList').textContent='Abhi koi sales order save nahi hua.';return}
+ $('salesOrderList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Order</th><th>Account</th><th>Date</th><th>Buyer country</th><th>Product</th><th>Qty</th><th>Sale</th><th>Status</th></tr></thead><tbody>'+data.map(o=>'<tr><td>'+esc(o.ebay_order_id)+'</td><td>'+esc(o.ebay_accounts?.account_name)+'</td><td>'+new Date(o.order_date).toLocaleString()+'</td><td>'+esc(o.buyer_country)+'</td><td>'+(o.sales_order_items||[]).map(i=>esc(i.products?.sku)+' — '+esc(i.products?.product_name)).join('<br>')+'</td><td>'+(o.sales_order_items||[]).map(i=>i.quantity).join(', ')+'</td><td>'+esc(o.currency)+' '+(o.sales_order_items||[]).reduce((n,i)=>n+Number(i.sale_amount||0),0).toFixed(2)+'</td><td>'+esc(o.order_status)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+async function loadEbayAccounts(){
+ const {data,error}=await sb.from('ebay_accounts').select('account_name,marketplace,seller_username,is_active').eq('workspace_id',workspaceId).order('account_name');
+ if(error){$('ebayAccountList').textContent='Could not load accounts: '+error.message;return}
+ if(!data?.length){$('ebayAccountList').textContent='Abhi eBay account add nahi hua.';return}
+ $('ebayAccountList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Account</th><th>Marketplace</th><th>Seller username</th><th>Status</th></tr></thead><tbody>'+data.map(a=>'<tr><td>'+esc(a.account_name)+'</td><td>'+esc(a.marketplace)+'</td><td>'+esc(a.seller_username)+'</td><td>'+(a.is_active?'Active':'Inactive')+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+async function loadFulfilmentOptions(){
+ const [orders,warehouses]=await Promise.all([
+  sb.from('sales_orders').select('id,ebay_order_id,order_date,order_status').eq('workspace_id',workspaceId).order('order_date',{ascending:false}),
+  sb.from('warehouses').select('id,warehouse_name').eq('workspace_id',workspaceId).eq('is_active',true).order('warehouse_name')
+ ]);
+ if(orders.error){msg('fulMsg','Sales orders: '+orders.error.message);return}
+ if(warehouses.error){msg('fulMsg','Warehouses: '+warehouses.error.message);return}
+ $('fulOrder').innerHTML='<option value="">Select sales order</option>'+(orders.data||[]).map(o=>'<option value="'+esc(o.id)+'">'+esc(o.ebay_order_id)+' — '+esc(o.order_status)+'</option>').join('');
+ $('fulWarehouse').innerHTML='<option value="">Select warehouse (optional)</option>'+(warehouses.data||[]).map(w=>'<option value="'+esc(w.id)+'">'+esc(w.warehouse_name)+'</option>').join('');
+}
+$('saveFulfilment').onclick=async()=>{
+ const orderId=$('fulOrder').value, method=$('fulMethod').value;
+ if(!orderId||!method){msg('fulMsg','Sales order aur fulfilment method select karna zaroori hai.');return}
+ const payload={workspace_id:workspaceId,sales_order_id:orderId,fulfilment_method:method,warehouse_id:$('fulWarehouse').value||null,carrier:$('fulCarrier').value.trim()||null,tracking_number:$('fulTracking').value.trim()||null,dispatch_date:$('fulDispatch').value||null,delivery_date:$('fulDelivery').value||null,fulfilment_status:$('fulStatus').value};
+ $('saveFulfilment').disabled=true;
+ const {error}=await sb.from('fulfilments').insert(payload);
+ $('saveFulfilment').disabled=false;
+ if(error){msg('fulMsg',error.message);return}
+ msg('fulMsg','Fulfilment details successfully save ho gayi.');
+ ['fulCarrier','fulTracking','fulDispatch','fulDelivery'].forEach(id=>$(id).value='');
+ $('fulOrder').value='';$('fulStatus').value='PENDING';await loadFulfilments();
+};
+async function loadFulfilments(){
+ const {data,error}=await sb.from('fulfilments').select('id,fulfilment_method,carrier,tracking_number,dispatch_date,delivery_date,fulfilment_status,sales_orders(ebay_order_id),warehouses(warehouse_name)').eq('workspace_id',workspaceId).order('dispatch_date',{ascending:false,nullsFirst:false});
+ if(error){$('fulfilmentList').textContent='Could not load fulfilments: '+error.message;return}
+ if(!data?.length){$('fulfilmentList').textContent='Abhi koi fulfilment record nahi hai.';return}
+ $('fulfilmentList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Order</th><th>Method</th><th>Warehouse</th><th>Carrier</th><th>Tracking</th><th>Dispatch</th><th>Delivery</th><th>Status</th></tr></thead><tbody>'+data.map(f=>'<tr><td>'+esc(f.sales_orders?.ebay_order_id)+'</td><td>'+esc(f.fulfilment_method)+'</td><td>'+esc(f.warehouses?.warehouse_name)+'</td><td>'+esc(f.carrier)+'</td><td>'+esc(f.tracking_number)+'</td><td>'+esc(f.dispatch_date)+'</td><td>'+esc(f.delivery_date)+'</td><td>'+esc(f.fulfilment_status)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+async function loadReturnOptions(){
+ const [items,warehouses]=await Promise.all([
+  sb.from('sales_order_items').select('id,quantity,products(product_name,sku),sales_orders(ebay_order_id)').eq('workspace_id',workspaceId),
+  sb.from('warehouses').select('id,warehouse_name').eq('workspace_id',workspaceId).eq('is_active',true).order('warehouse_name')
+ ]);
+ if(items.error){msg('returnMsg','Order items: '+items.error.message);return}
+ if(warehouses.error){msg('returnMsg','Warehouses: '+warehouses.error.message);return}
+ $('returnOrderItem').innerHTML='<option value="">Select order and product</option>'+(items.data||[]).map(i=>'<option value="'+esc(i.id)+'" data-product="'+esc(i.products?.product_name||'')+'">'+esc(i.sales_orders?.ebay_order_id)+' — '+esc(i.products?.product_name)+' ('+esc(i.products?.sku)+') · ordered '+i.quantity+'</option>').join('');
+ $('returnWarehouse').innerHTML='<option value="">Do not add to stock</option>'+(warehouses.data||[]).map(w=>'<option value="'+esc(w.id)+'">'+esc(w.warehouse_name)+'</option>').join('');
+}
+$('saveReturn').onclick=async()=>{
+ const itemId=$('returnOrderItem').value,qty=Number($('returnQty').value||0),warehouseId=$('returnWarehouse').value;
+ if(!itemId||!Number.isInteger(qty)||qty<1){msg('returnMsg','Sales order item select karein aur quantity 1 ya zyada enter karein.');return}
+ const {data:item,error:itemErr}=await sb.from('sales_order_items').select('id,workspace_id,sales_order_id,product_id,quantity,products(product_name)').eq('id',itemId).single();
+ if(itemErr){msg('returnMsg',itemErr.message);return}
+ const {data:existing,error:existingErr}=await sb.from('returns').select('quantity').eq('workspace_id',workspaceId).eq('sales_order_id',item.sales_order_id).eq('product_id',item.product_id);
+ if(existingErr){msg('returnMsg',existingErr.message);return}
+ const already=(existing||[]).reduce((n,r)=>n+Number(r.quantity||0),0);
+ if(already+qty>Number(item.quantity)){msg('returnMsg','Return quantity ordered quantity se zyada nahi ho sakti. Pehle se returned: '+already);return}
+ const payload={workspace_id:workspaceId,sales_order_id:item.sales_order_id,product_id:item.product_id,return_date:$('returnDate').value||new Date().toISOString().slice(0,10),reason:$('returnReason').value.trim()||null,quantity:qty,refund_amount:Number($('returnRefund').value||0),item_condition:$('returnCondition').value,restock_warehouse_id:warehouseId||null,return_status:$('returnStatus').value};
+ $('saveReturn').disabled=true;
+ const {data:ret,error}=await sb.from('returns').insert(payload).select('id').single();
+ if(error){$('saveReturn').disabled=false;msg('returnMsg',error.message);return}
+ if(warehouseId && $('returnCondition').value==='SELLABLE' && ['RECEIVED','REFUNDED'].includes(payload.return_status)){
+  const {error:stockErr}=await sb.from('stock_movements').insert({workspace_id:workspaceId,product_id:item.product_id,warehouse_id:warehouseId,movement_type:'RETURN_IN',quantity:qty,reference_type:'CUSTOMER_RETURN',reference_id:ret.id,notes:'Customer return restocked'});
+  if(stockErr){$('saveReturn').disabled=false;msg('returnMsg','Return save ho gaya lekin stock receive nahi hua: '+stockErr.message+'. Stock movement manually check karein.');await loadReturns();return}
+ }
+ $('saveReturn').disabled=false;msg('returnMsg','Return successfully save ho gaya.');$('returnOrderItem').value='';$('returnQty').value='1';$('returnReason').value='';$('returnRefund').value='0';await loadReturns();await loadInventory();
+};
+async function loadReturns(){
+ const {data,error}=await sb.from('returns').select('return_date,reason,quantity,refund_amount,item_condition,return_status,sales_orders(ebay_order_id),products(product_name,sku),warehouses:warehouses!returns_restock_warehouse_id_fkey(warehouse_name)').eq('workspace_id',workspaceId).order('return_date',{ascending:false});
+ if(error){$('returnList').textContent='Could not load returns: '+error.message;return}
+ if(!data?.length){$('returnList').textContent='Abhi koi return record nahi hai.';return}
+ $('returnList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Order</th><th>Product</th><th>Qty</th><th>Reason</th><th>Condition</th><th>Refund</th><th>Status</th><th>Restock warehouse</th></tr></thead><tbody>'+data.map(r=>'<tr><td>'+esc(r.return_date)+'</td><td>'+esc(r.sales_orders?.ebay_order_id)+'</td><td>'+esc(r.products?.product_name)+' ('+esc(r.products?.sku)+')</td><td>'+r.quantity+'</td><td>'+esc(r.reason)+'</td><td>'+esc(r.item_condition)+'</td><td>'+Number(r.refund_amount||0).toFixed(2)+'</td><td>'+esc(r.return_status)+'</td><td>'+esc(r.warehouses?.warehouse_name)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+async function loadTransferOptions(){
+ const [wh,pr]=await Promise.all([sb.from('warehouses').select('id,warehouse_name').eq('workspace_id',workspaceId).eq('is_active',true).order('warehouse_name'),sb.from('products').select('id,sku,product_name').eq('workspace_id',workspaceId).order('product_name')]);
+ if(wh.error){msg('transferMsg',wh.error.message);return} if(pr.error){msg('transferMsg',pr.error.message);return}
+ const opts=(wh.data||[]).map(w=>'<option value="'+w.id+'">'+esc(w.warehouse_name)+'</option>').join('');$('transferFrom').innerHTML='<option value="">Select source warehouse</option>'+opts;$('transferTo').innerHTML='<option value="">Select destination warehouse</option>'+opts;
+ $('transferProducts').innerHTML=(pr.data||[]).length?(pr.data||[]).map(p=>'<div class="grid" style="align-items:end;border-bottom:1px solid #edf0f5;padding:6px 0"><div><label>'+esc(p.product_name)+' ('+esc(p.sku)+')</label></div><div><label>Transfer quantity</label><input class="transferQty" data-product="'+p.id+'" type="number" min="0" step="1" value="0"></div></div>').join(''):'No products available. Pehle product add karein.';
+}
+$('saveTransfer').onclick=async()=>{
+ const items=[...document.querySelectorAll('.transferQty')].map(x=>({product_id:x.dataset.product,quantity:Number(x.value||0)})).filter(x=>x.quantity>0);
+ const ref=$('transferReference').value.trim(),from=$('transferFrom').value,to=$('transferTo').value;
+ if(!ref||!from||!to){msg('transferMsg','Reference, source aur destination warehouse select karein.');return}
+ if(from===to){msg('transferMsg','Source aur destination warehouse alag honay chahiye.');return}
+ if(!items.length){msg('transferMsg','Kam az kam ek product ki quantity 1 ya zyada enter karein.');return}
+ $('saveTransfer').disabled=true;
+ const {error}=await sb.rpc('create_stock_transfer',{p_workspace_id:workspaceId,p_reference:ref,p_from_warehouse:from,p_to_warehouse:to,p_notes:$('transferNotes').value.trim()||null,p_items:items});
+ $('saveTransfer').disabled=false;
+ if(error){msg('transferMsg',error.message);return}
+ msg('transferMsg','Stock transfer successfully save ho gaya. Source se stock minus aur destination mein add ho gaya.');$('transferReference').value='';$('transferNotes').value='';document.querySelectorAll('.transferQty').forEach(x=>x.value='0');await loadInventory();await loadTransferList();
+};
+async function loadTransferList(){
+ const {data,error}=await sb.from('stock_transfers').select('transfer_reference,created_at,notes,warehouses!stock_transfers_from_warehouse_id_fkey(warehouse_name),to:warehouses!stock_transfers_to_warehouse_id_fkey(warehouse_name),stock_transfer_items(quantity,products(product_name,sku))').eq('workspace_id',workspaceId).order('created_at',{ascending:false});
+ if(error){$('transferList').textContent='Could not load transfers: '+error.message;return} if(!data?.length){$('transferList').textContent='Abhi koi stock transfer nahi hua.';return}
+ $('transferList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Reference</th><th>From</th><th>To</th><th>Products / Qty</th><th>Date</th></tr></thead><tbody>'+data.map(t=>'<tr><td>'+esc(t.transfer_reference)+'</td><td>'+esc(t.warehouses?.warehouse_name)+'</td><td>'+esc(t.to?.warehouse_name)+'</td><td>'+t.stock_transfer_items.map(i=>esc(i.products?.product_name||i.products?.sku)+' × '+i.quantity).join('<br>')+'</td><td>'+new Date(t.created_at).toLocaleString()+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+$('refreshInventory').onclick=loadInventory;
+async function loadInventory(){
+ const [mov,pro,wh]=await Promise.all([
+  sb.from('stock_movements').select('product_id,warehouse_id,movement_type,quantity,movement_at,notes').eq('workspace_id',workspaceId).order('movement_at',{ascending:false}),
+  sb.from('products').select('id,sku,product_name').eq('workspace_id',workspaceId),
+  sb.from('warehouses').select('id,warehouse_name').eq('workspace_id',workspaceId)
+ ]);
+ if(mov.error){$('inventoryList').textContent='Could not load stock movements: '+mov.error.message;return}
+ if(pro.error){$('inventoryList').textContent='Could not load products: '+pro.error.message;return}
+ if(wh.error){$('inventoryList').textContent='Could not load warehouses: '+wh.error.message;return}
+ const products=new Map((pro.data||[]).map(x=>[x.id,x]));
+ const warehouses=new Map((wh.data||[]).map(x=>[x.id,x]));
+ const balances=new Map();
+ for(const m of (mov.data||[])){
+  const key=m.product_id+'|'+m.warehouse_id;
+  const current=balances.get(key)||{product_id:m.product_id,warehouse_id:m.warehouse_id,qty:0,last:m.movement_at};
+  const type=String(m.movement_type||'').toUpperCase();
+  const qty=Number(m.quantity||0);
+  if(['OUTBOUND','SALE','REMOVE','DAMAGE','WRITE_OFF','RETURN_TO_SUPPLIER'].includes(type)) current.qty-=qty;
+  else current.qty+=qty;
+  if(!current.last||m.movement_at>current.last)current.last=m.movement_at;
+  balances.set(key,current);
+ }
+ if(!balances.size){$('inventoryList').textContent='Abhi stock movements nahi hain. Inbound shipment receive karne ke baad stock yahan nazar aayega.';return}
+ const rows=[...balances.values()].map(b=>({product:products.get(b.product_id),warehouse:warehouses.get(b.warehouse_id),qty:b.qty,last:b.last})).sort((a,b)=>(a.product?.product_name||'').localeCompare(b.product?.product_name||''));
+ $('inventoryList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>SKU</th><th>Product</th><th>Warehouse</th><th>Available stock</th><th>Last movement</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.product?.sku||r.product?.id||'Unknown')+'</td><td>'+esc(r.product?.product_name||'Unknown product')+'</td><td>'+esc(r.warehouse?.warehouse_name||'Unknown warehouse')+'</td><td><strong>'+r.qty+'</strong></td><td>'+esc(r.last?new Date(r.last).toLocaleString():'—')+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+async function loadInboundList(){
+ const {data,error}=await sb.from('inbound_shipments').select('shipment_reference,status,carrier,tracking_number,shipped_date,estimated_arrival,delivered_date,freight_currency,freight_cost,customs_duty,other_cost,purchase_orders(po_number),warehouses(warehouse_name)').eq('workspace_id',workspaceId).order('shipped_date',{ascending:false});
+ if(error){$('inboundList').textContent='Could not load inbound shipments: '+error.message;return}
+ if(!data?.length){$('inboundList').textContent='No inbound shipments saved yet.';return}
+ $('inboundList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Shipment</th><th>PO</th><th>Warehouse</th><th>Carrier / Tracking</th><th>Shipped</th><th>ETA</th><th>Status</th><th>Costs</th></tr></thead><tbody>'+data.map(s=>'<tr><td>'+esc(s.shipment_reference)+'</td><td>'+esc(s.purchase_orders?.po_number)+'</td><td>'+esc(s.warehouses?.warehouse_name)+'</td><td>'+esc(s.carrier)+' / '+esc(s.tracking_number)+'</td><td>'+esc(s.shipped_date)+'</td><td>'+esc(s.estimated_arrival)+'</td><td>'+esc(s.status)+'</td><td>'+esc(s.freight_currency)+' '+(Number(s.freight_cost||0)+Number(s.customs_duty||0)+Number(s.other_cost||0)).toFixed(2)+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+async function loadCostOptions(){
+ const [pr,su]=await Promise.all([sb.from('products').select('id,sku,product_name').eq('workspace_id',workspaceId).order('product_name'),sb.from('suppliers').select('id,supplier_name').eq('workspace_id',workspaceId).order('supplier_name')]);
+ if(pr.error){msg('costMsg','Products: '+pr.error.message);return} if(su.error){msg('costMsg','Suppliers: '+su.error.message);return}
+ $('costProduct').innerHTML='<option value="">Select product</option>'+pr.data.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.sku)+' — '+esc(x.product_name)+'</option>').join('');
+ supplierOptions=su.data||[]; selectedSupplierId=''; $('costSupplier').value=''; $('costSupplierSearch').value=''; $('supplierSelectedHint').textContent='Tap and type to find a supplier.'; $('supplierSearchResults').classList.add('hidden');
+}
+function renderSupplierMatches(query=''){
+ const box=$('supplierSearchResults'); const q=query.trim().toLowerCase();
+ const matches=supplierOptions.filter(x=>x.supplier_name.toLowerCase().includes(q)).slice(0,50);
+ if(!matches.length){box.innerHTML='<div style="padding:12px;color:#687386">No matching supplier found.</div>';box.classList.remove('hidden');return}
+ box.innerHTML=matches.map(x=>'<button type="button" data-supplier-id="'+esc(x.id)+'">'+esc(x.supplier_name)+'</button>').join(''); box.classList.remove('hidden');
+}
+$('costSupplierSearch').addEventListener('focus',()=>renderSupplierMatches($('costSupplierSearch').value));
+$('costSupplierSearch').addEventListener('input',()=>{selectedSupplierId='';$('costSupplier').value='';$('supplierSelectedHint').textContent='Choose a supplier from the search results.';renderSupplierMatches($('costSupplierSearch').value)});
+$('supplierSearchResults').addEventListener('click',e=>{const b=e.target.closest('button[data-supplier-id]');if(!b)return;selectedSupplierId=b.dataset.supplierId;$('costSupplier').value=selectedSupplierId;$('costSupplierSearch').value=supplierOptions.find(x=>x.id===selectedSupplierId)?.supplier_name||'';$('supplierSelectedHint').textContent='Selected: '+$('costSupplierSearch').value;$('supplierSearchResults').classList.add('hidden')});
+document.addEventListener('click',e=>{if(!e.target.closest('.supplier-search'))$('supplierSearchResults').classList.add('hidden')});
+function updateLanded(){const a=Number($('purchaseCost').value||0),b=Number($('shippingCost').value||0),c=Number($('otherCost').value||0);$('landedTotal').textContent=(a+b+c).toFixed(2)}
+['purchaseCost','shippingCost','otherCost'].forEach(id=>$(id).addEventListener('input',updateLanded));
+$('saveCost').onclick=async()=>{
+ const product_id=$('costProduct').value,supplier_id=selectedSupplierId,purchase=Number($('purchaseCost').value);
+ if(!product_id||!supplier_id||!$('purchaseCost').value.trim()){msg('costMsg','Product, supplier and purchase cost are required.');return}
+ const payload={workspace_id:workspaceId,product_id,supplier_id,currency:$('costCurrency').value,unit_cost:purchase,purchase_cost:purchase,shipping_cost:Number($('shippingCost').value||0),other_cost:Number($('otherCost').value||0)};
+ const {error}=await sb.from('product_supplier_costs').insert(payload);if(error){msg('costMsg',error.message);return}
+ msg('costMsg','Product supplier cost saved.');$('purchaseCost').value='';$('shippingCost').value='0';$('otherCost').value='0';updateLanded();await loadCosts();
+};
+async function loadCosts(){
+ const {data,error}=await sb.from('product_supplier_costs').select('currency,purchase_cost,shipping_cost,other_cost,products(product_name,sku),suppliers(supplier_name)').eq('workspace_id',workspaceId);
+ if(error){$('costs').textContent='Could not load supplier costs: '+error.message;return}
+ if(!data.length){$('costs').textContent='No supplier costs saved yet.';return}
+ $('costs').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Product</th><th>Supplier</th><th>Purchase</th><th>Shipping</th><th>Other</th><th>Total / unit</th></tr></thead><tbody>'+data.map(x=>{const total=Number(x.purchase_cost)+Number(x.shipping_cost)+Number(x.other_cost);return '<tr><td>'+esc(x.products?.sku)+' — '+esc(x.products?.product_name)+'</td><td>'+esc(x.suppliers?.supplier_name)+'</td><td>'+esc(x.currency)+' '+Number(x.purchase_cost).toFixed(2)+'</td><td>'+Number(x.shipping_cost).toFixed(2)+'</td><td>'+Number(x.other_cost).toFixed(2)+'</td><td><strong>'+esc(x.currency)+' '+total.toFixed(2)+'</strong></td></tr>'}).join('')+'</tbody></table></div>';
+}
+
+
+$('expenseDate').value=new Date().toISOString().slice(0,10);
+$('saveExpense').onclick=async()=>{
+ const amount=Number($('expenseAmount').value);
+ const payload={workspace_id:workspaceId,expense_date:$('expenseDate').value||new Date().toISOString().slice(0,10),category:$('expenseCategory').value,description:$('expenseDescription').value.trim(),amount,currency:$('expenseCurrency').value,reference_type:$('expenseReferenceType').value.trim()||null};
+ if(!payload.description||!Number.isFinite(amount)||amount<=0){msg('expenseMsg','Description aur amount (0 se zyada) zaroori hain.');return}
+ const {error}=await sb.from('expenses').insert(payload);
+ if(error){msg('expenseMsg',error.message);return}
+ msg('expenseMsg','Expense successfully save ho gaya.');$('expenseDescription').value='';$('expenseAmount').value='';$('expenseReferenceType').value='';await loadExpenses();
+};
+async function loadExpenses(){
+ const {data,error}=await sb.from('expenses').select('expense_date,category,description,amount,currency,reference_type').eq('workspace_id',workspaceId).order('expense_date',{ascending:false});
+ if(error){$('expenseList').textContent='Could not load expenses: '+error.message;return}
+ if(!data?.length){$('expenseSummary').textContent='Abhi koi expense record nahi hai.';$('expenseList').textContent='';return}
+ const totals={};data.forEach(x=>{const month=String(x.expense_date||'').slice(0,7);const key=month+' '+x.currency;totals[key]=(totals[key]||0)+Number(x.amount||0)});
+ $('expenseSummary').innerHTML='<h3>Monthly expense totals</h3><ul>'+Object.entries(totals).map(([k,v])=>'<li><strong>'+esc(k)+'</strong>: '+v.toFixed(2)+'</li>').join('')+'</ul><p class="muted">Different currencies alag dikhayi gayi hain; unka conversion nahi kiya gaya.</p>';
+ $('expenseList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Reference</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+esc(x.expense_date)+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.currency)+' '+Number(x.amount||0).toFixed(2)+'</td><td>'+esc(x.reference_type||'—')+'</td></tr>').join('')+'</tbody></table></div>';
+}
+
+$('mktStart').value=new Date().toISOString().slice(0,10);
+$('saveCampaign').onclick=async()=>{
+ const spend=Number($('mktSpend').value), sales=Number($('mktSales').value||0);
+ const payload={workspace_id:workspaceId,campaign_name:$('mktName').value.trim(),channel:$('mktChannel').value,start_date:$('mktStart').value||null,end_date:$('mktEnd').value||null,currency:$('mktCurrency').value,ad_spend:spend,attributed_sales:sales,notes:$('mktNotes').value.trim()||null};
+ if(!payload.campaign_name||!Number.isFinite(spend)||spend<0||!Number.isFinite(sales)||sales<0){msg('mktMsg','Campaign name aur valid spend/sales amounts enter karein.');return}
+ if(payload.start_date&&payload.end_date&&payload.end_date<payload.start_date){msg('mktMsg','End date start date se pehle nahi ho sakti.');return}
+ const {error}=await sb.from('marketing_campaigns').insert(payload);
+ if(error){msg('mktMsg',error.message);return}
+ msg('mktMsg','Campaign successfully save ho gayi.');$('mktName').value='';$('mktSpend').value='';$('mktSales').value='0';$('mktNotes').value='';$('mktEnd').value='';await loadMarketingCampaigns();
+};
+async function loadMarketingCampaigns(){
+ const {data,error}=await sb.from('marketing_campaigns').select('campaign_name,channel,start_date,end_date,currency,ad_spend,attributed_sales,notes').eq('workspace_id',workspaceId).order('start_date',{ascending:false});
+ if(error){$('mktList').textContent='Could not load campaigns: '+error.message;return}
+ if(!data?.length){$('mktList').textContent='Abhi koi campaign record nahi hai.';return}
+ $('mktList').innerHTML='<div style="overflow-x:auto"><table><thead><tr><th>Campaign</th><th>Channel</th><th>Dates</th><th>Ad spend</th><th>Attributed sales</th><th>ROAS</th></tr></thead><tbody>'+data.map(x=>{const spend=Number(x.ad_spend||0),sales=Number(x.attributed_sales||0),roas=spend>0?(sales/spend).toFixed(2)+'x':'—';return '<tr><td>'+esc(x.campaign_name)+'</td><td>'+esc(x.channel)+'</td><td>'+esc(x.start_date||'—')+' to '+esc(x.end_date||'—')+'</td><td>'+esc(x.currency)+' '+spend.toFixed(2)+'</td><td>'+esc(x.currency)+' '+sales.toFixed(2)+'</td><td><strong>'+roas+'</strong></td></tr>'}).join('')+'</tbody></table></div>';
+}
+
+function moneyByCurrency(rows, amountField){
+ const out={}; (rows||[]).forEach(r=>{const c=r.currency||'UNKNOWN';out[c]=(out[c]||0)+Number(r[amountField]||0)}); return out;
+}
+function currencyLines(obj){const keys=Object.keys(obj);return keys.length?'<ul>'+keys.sort().map(c=>'<li><strong>'+esc(c)+'</strong> '+obj[c].toFixed(2)+'</li>').join('')+'</ul>':'<p class="muted">No records yet.</p>'}
+function dashCard(label,value){return '<div class="panel"><small>'+esc(label)+'</small><h2 style="margin:8px 0">'+esc(value)+'</h2></div>'}
+async function loadDashboard(){
+ msg('dashboardMsg','Loading dashboard...');
+ const queries=await Promise.all([
+  sb.from('sales_orders').select('id,currency,order_status,order_date').eq('workspace_id',workspaceId),
+  sb.from('sales_order_items').select('quantity,sale_amount,product_cost,ebay_payment_fees,outbound_shipping_cost,sales_orders(currency)').eq('workspace_id',workspaceId),
+  sb.from('expenses').select('amount,currency,category,expense_date').eq('workspace_id',workspaceId),
+  sb.from('stock_movements').select('product_id,warehouse_id,movement_type,quantity,warehouses(warehouse_name)').eq('workspace_id',workspaceId),
+  sb.from('products').select('id').eq('workspace_id',workspaceId),
+  sb.from('purchase_orders').select('id,status,currency,purchase_order_items(quantity_ordered,unit_cost)').eq('workspace_id',workspaceId),
+  sb.from('marketing_campaigns').select('currency,ad_spend,attributed_sales').eq('workspace_id',workspaceId),
+  sb.from('returns').select('id,refund_amount').eq('workspace_id',workspaceId),
+  sb.from('fulfilments').select('id,fulfilment_status').eq('workspace_id',workspaceId)
+ ]);
+ const labels=['Sales orders','Sales items','Expenses','Stock movements','Products','Purchase orders','Marketing','Returns','Fulfilments'];
+ const errors=queries.map((q,i)=>q.error?labels[i]+': '+q.error.message:null).filter(Boolean);
+ const [ordersQ,itemsQ,expensesQ,movesQ,productsQ,posQ,marketingQ,returnsQ,fulQ]=queries;
+ const orders=ordersQ.data||[], items=itemsQ.data||[], expenses=expensesQ.data||[], moves=movesQ.data||[], pos=posQ.data||[], campaigns=marketingQ.data||[];
+ const sales={}; let estimatedContribution={};
+ items.forEach(x=>{const currency=x.sales_orders?.currency||'UNKNOWN';const amount=Number(x.sale_amount||0);sales[currency]=(sales[currency]||0)+amount;const cost=Number(x.product_cost||0)+Number(x.ebay_payment_fees||0)+Number(x.outbound_shipping_cost||0);estimatedContribution[currency]=(estimatedContribution[currency]||0)+amount-cost});
+ const expenseTotals=moneyByCurrency(expenses,'amount');
+ const expenseCounts=Object.keys(expenseTotals).length;
+ const warehouseTotals={};
+ moves.forEach(m=>{const name=m.warehouses?.warehouse_name||'Unknown warehouse';let sign=1; if(['OUTBOUND','SALE','REMOVE','DAMAGE','WRITE_OFF','RETURN_TO_SUPPLIER','TRANSFER_OUT'].includes(String(m.movement_type||'').toUpperCase()))sign=-1;warehouseTotals[name]=(warehouseTotals[name]||0)+sign*Number(m.quantity||0)});
+ const pendingPO=pos.filter(x=>!['RECEIVED','CANCELLED','CLOSED'].includes(String(x.status||'').toUpperCase())).length;
+ const pendingOrders=orders.filter(x=>!['SHIPPED','COMPLETED','DELIVERED','CANCELLED'].includes(String(x.order_status||'').toUpperCase())).length;
+ const marketingSpend=moneyByCurrency(campaigns.map(x=>({currency:x.currency,amount:x.ad_spend})),'amount');
+ $('dashboardCards').innerHTML=dashCard('Products',String(productsQ.data?.length||0))+dashCard('Sales orders',String(orders.length))+dashCard('Pending sales orders',String(pendingOrders))+dashCard('Purchase orders',String(pos.length))+dashCard('Pending purchase orders',String(pendingPO))+dashCard('Returns',String(returnsQ.data?.length||0))+dashCard('Fulfilments',String(fulQ.data?.length||0))+dashCard('Stock movement records',String(moves.length));
+ $('dashSales').innerHTML='<p><strong>Recorded sales</strong></p>'+currencyLines(sales)+'<p><strong>Estimated contribution before general expenses</strong></p>'+currencyLines(estimatedContribution);
+ $('dashExpenses').innerHTML='<p><strong>Recorded expenses</strong></p>'+currencyLines(expenseTotals)+'<p><strong>Marketing spend (included only if also entered as expense, do not add twice)</strong></p>'+currencyLines(marketingSpend);
+ $('dashInventory').innerHTML=Object.keys(warehouseTotals).length?'<ul>'+Object.keys(warehouseTotals).sort().map(k=>'<li><strong>'+esc(k)+'</strong>: '+warehouseTotals[k]+' net units movement</li>').join('')+'</ul>':'<p class="muted">No stock movements recorded yet.</p>';
+ $('dashOperations').innerHTML='<p>Sales orders: <strong>'+orders.length+'</strong> · Pending: <strong>'+pendingOrders+'</strong></p><p>Purchase orders: <strong>'+pos.length+'</strong> · Pending: <strong>'+pendingPO+'</strong></p><p>Return records: <strong>'+(returnsQ.data?.length||0)+'</strong> · Fulfilment records: <strong>'+(fulQ.data?.length||0)+'</strong></p><p class="muted">Inventory figures above show net unit movements, not monetary stock valuation. Profit is not a final accounting P&L; currency conversion, tax, refunds and other adjustments are not fully reconciled.</p>';
+ if(errors.length)msg('dashboardMsg','Some dashboard sections could not load:\n'+errors.join('\n'));else msg('dashboardMsg','Dashboard updated successfully.');
+}
+$('refreshDashboard').onclick=loadDashboard;
+
+$('addSupplier').onclick=async()=>{
+ const lead=$('supplierLead').value.trim();
+ const payload={workspace_id:workspaceId,supplier_name:$('supplierName').value.trim(),country:$('supplierCountry').value.trim()||null,contact_name:$('supplierContact').value.trim()||null,email:$('supplierEmail').value.trim()||null,phone:$('supplierPhone').value.trim()||null,website:$('supplierWebsite').value.trim()||null,payment_terms:$('supplierTerms').value.trim()||null,lead_time_days:lead?Number(lead):null,notes:$('supplierNotes').value.trim()||null};
+ if(!payload.supplier_name){msg('supplierMsg','Supplier name is required.');return}
+ const {error}=await sb.from('suppliers').insert(payload);
+ if(error){msg('supplierMsg',error.message);return}
+ msg('supplierMsg','Supplier saved successfully.');
+ ['supplierName','supplierCountry','supplierContact','supplierEmail','supplierPhone','supplierWebsite','supplierTerms','supplierLead','supplierNotes'].forEach(id=>$(id).value='');
+ await loadSuppliers(); await loadCostOptions();
+};
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('addProduct').onclick=async()=>{
+ const payload={workspace_id:workspaceId,sku:$('sku').value.trim(),product_name:$('productName').value.trim(),business_model:$('model').value,target_sell_price:$('price').value?Number($('price').value):null};
+ if(!payload.sku||!payload.product_name){msg('productMsg','SKU and Product name are required.');return}
+ const {error}=await sb.from('products').insert(payload);
+ if(error){msg('productMsg',error.message);return}
+ msg('productMsg','Product saved.');$('sku').value='';$('productName').value='';$('price').value='';await loadProducts(); await loadCostOptions();
+};
+$('logout').onclick=async()=>{await sb.auth.signOut();currentUser=null;workspaceId=null;show('app',false);show('logout',false);show('auth',true)};
+if(localStorage.getItem('erp_url')&&localStorage.getItem('erp_key')) initClient();
+</script>
+</body></html>
